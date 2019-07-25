@@ -5,6 +5,14 @@ VisualStudioVersion = 15.0.28307.757
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Anders Car Controller", "Anders Car Controller\Anders Car Controller.csproj", "{77C30514-4E27-4479-AFE4-93B3B4B18E4C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Anders Drillstation Controller", "Anders Drillstation Controller\Anders Drillstation Controller.csproj", "{B8A48986-CC92-43BD-8815-4A9D12E95ABC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Anders Housekeeping", "Anders Housekeeping\Anders Housekeeping.csproj", "{F39F9A5B-48D0-41E1-A767-1967C1FAE433}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Anders Lift Controller", "Anders Lift Controller\Anders Lift Controller.csproj", "{EF1149CA-1270-4653-B9DC-5CBFB3889112}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Anders Master Orgy", "Anders Master Orgy\Anders Master Orgy.csproj", "{33A9BE9C-04B2-4383-A845-359FE8F34F65}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -12,6 +20,14 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{77C30514-4E27-4479-AFE4-93B3B4B18E4C}.Debug|x64.ActiveCfg = Debug|x64
 		{77C30514-4E27-4479-AFE4-93B3B4B18E4C}.Debug|x64.Build.0 = Debug|x64
+		{B8A48986-CC92-43BD-8815-4A9D12E95ABC}.Debug|x64.ActiveCfg = Debug|x64
+		{B8A48986-CC92-43BD-8815-4A9D12E95ABC}.Debug|x64.Build.0 = Debug|x64
+		{F39F9A5B-48D0-41E1-A767-1967C1FAE433}.Debug|x64.ActiveCfg = Debug|x64
+		{F39F9A5B-48D0-41E1-A767-1967C1FAE433}.Debug|x64.Build.0 = Debug|x64
+		{EF1149CA-1270-4653-B9DC-5CBFB3889112}.Debug|x64.ActiveCfg = Debug|x64
+		{EF1149CA-1270-4653-B9DC-5CBFB3889112}.Debug|x64.Build.0 = Debug|x64
+		{33A9BE9C-04B2-4383-A845-359FE8F34F65}.Debug|x64.ActiveCfg = Debug|x64
+		{33A9BE9C-04B2-4383-A845-359FE8F34F65}.Debug|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
