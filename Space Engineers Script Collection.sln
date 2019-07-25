@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.757
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Anders Car Controller", "Anders Car Controller\Anders Car Controller.csproj", "{77C30514-4E27-4479-AFE4-93B3B4B18E4C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{77C30514-4E27-4479-AFE4-93B3B4B18E4C}.Debug|x64.ActiveCfg = Debug|x64
+		{77C30514-4E27-4479-AFE4-93B3B4B18E4C}.Debug|x64.Build.0 = Debug|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7CDF87C2-FB11-41B6-90C3-F5DA81655C1D}
+	EndGlobalSection
+EndGlobal
