@@ -42,6 +42,7 @@ namespace IngameScript
         Dictionary<string, Action> commands;
         MyCommandLine cline = new MyCommandLine();
         MyIni ini = new MyIni();
+		String lastConfig = "";
 
         //values to be manually set via custom data
         UpdateFrequency freq = UpdateFrequency.Update100;
@@ -156,8 +157,25 @@ namespace IngameScript
         //we dont need this
         public void Save()
         {
+			ini.Clear();
+			String section = "Save";
+            ini.Set(section, "lastID", lastID);
+			ini.Set(section, "lastConfig", lastConfig);
+			ini.Set(section, "tickCounter", tickCounter);
+			ini.Set(section, "name", name);
+			ini.Set(section, "UpdateFrequency", (freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1") );
+			ini.Set(section, "maxSpeed", maxSpeed);
+			ini.Set(section, "brakeDist", brakeDist);
+			
+			foreach (Station station in stations) {
+				section = "Station " + station.ID;
+				ini.Set(section, "name", station.name);
+				ini.Set(section, "stopTime", station.stopTime);
+				ini.Set(section, "offset", station.offset);
+				ini.Set(section, "Position", station.position);
+			}
             //TODO: serialize list of stations to storage
-            /* currID
+            /* lastID
              * lastConfig
              * list of stations
              * 
