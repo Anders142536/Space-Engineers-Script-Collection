@@ -47,7 +47,7 @@ namespace IngameScript
         //values to be manually set via custom data
         UpdateFrequency freq = UpdateFrequency.Update100;
         float maxSpeed = 50;    //UNIT?
-        int brakeDist = 5;      //UNIT?
+        float brakeDist = 5;      //UNIT?
 
 
 
@@ -158,42 +158,70 @@ namespace IngameScript
         public void Save()
         {
 			ini.Clear();
-			String section = "Save";
-            ini.Set(section, "lastID", lastID);
-			ini.Set(section, "lastConfig", lastConfig);
-			ini.Set(section, "tickCounter", tickCounter);
-			ini.Set(section, "name", name);
-			ini.Set(section, "UpdateFrequency", (freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1") );
-			ini.Set(section, "maxSpeed", maxSpeed);
-			ini.Set(section, "brakeDist", brakeDist);
+			String sec = "Save";
+            ini.Set(sec, "lastID", lastID);
+			ini.Set(sec, "lastConfig", lastConfig);
+			ini.Set(sec, "tickCounter", tickCounter);
+			ini.Set(sec, "name", name);
+			ini.Set(sec, "UpdateFrequency", (freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1") );
+			ini.Set(sec, "maxSpeed", maxSpeed);
+			ini.Set(sec, "brakeDist", brakeDist);
+			String IDs = "";
+			foreach (Station station in stations) {
+				IDs += station.ID + " ";
+			}
+			ini.Set(sec, "IDs", IDs);
 			
 			foreach (Station station in stations) {
-				section = "Station " + station.ID;
-				ini.Set(section, "name", station.name);
-				ini.Set(section, "stopTime", station.stopTime);
-				ini.Set(section, "offset", station.offset);
-				ini.Set(section, "Position", station.position);
+				sec = "Station " + station.ID;
+				ini.Set(sec, "name", station.name);
+				ini.Set(sec, "stopTime", station.stopTime);
+				ini.Set(sec, "offset", station.offset);
+				ini.Set(sec, "Position", station.position);
 			}
-            //TODO: serialize list of stations to storage
-            /* lastID
-             * lastConfig
-             * list of stations
-             * 
-             */
         }
 
         private void loadStorage()
         {
-            if (Storage != "" && ini.TryParse(Storage))
+			MyIniParseResult result;
+            if (Storage != "" && ini.TryParse(Storage, out result))
             {
-                //TODO: redo loadini here
-                /* currID
-                 * lastConfig
-                 * lastID
-                 * list of serialized stations
-                 * 
-                 * 
-                 * IMPORTANT:
+				String freqString;
+				String IDs;
+                String sec = "Save";
+				ini.Get(sec, "lastID").TryGetInt64(out lastID);
+				ini.Get(sec, "lastConfig").TryGetString(out lastConfig);
+				ini.Get(sec, "tickCounter").TryGetInt64(out tickCounter);
+				ini.Get(sec, "name").TryGetString(out name);
+				ini.Get(sec, "UpdateFrequency").TryGetString(out freqString);
+				ini.Get(sec, "maxSpeed").TryGetFloat(out maxSpeed);
+				ini.Get(sec, "brakeDist").TryGetFloat(out brakeDist);
+				ini.Get(sec, "IDs").TryGetString(out IDs);
+				
+				freq = (freqString == "100" ? UpdateFrequency.Update100 : (freqString == "10" ? UpdateFrequency.Update10 : UpdateFrequency.Update1));
+				String[] stationIDs = IDs.split(" ");
+				
+				String stationName;
+				int stationStopTime;
+				int stationOffset;
+				String stationPosition;
+				
+				foreach (String ID in stationIDs) {
+					sec = "Station " + ID;
+					ini.Get(sec, "name").TryGetString(out stationName);
+					ini.Get(sec, "stopTime").TryGetInt64(out stationStopTime);
+					ini.Get(sec, "offset").TryGetInt64(out stationOffset);
+					ini.Get(sec, "position").TryGetString(out stationPositon);
+					
+					Station temp = new Station(stationPosition, (int)ID, stationName);
+					temp.stopTime = stationStopTime;
+					temp.offset = stationOffset;
+					stations.add(temp);
+				}
+				
+				
+				
+                /* IMPORTANT:
                  * print current state to custom data
                  */
             }
