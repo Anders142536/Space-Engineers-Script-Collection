@@ -42,12 +42,11 @@ namespace IngameScript
         Dictionary<string, Action> commands;
         MyCommandLine cline = new MyCommandLine();
         MyIni ini = new MyIni();
-		String lastConfig = "";
 
         //values to be manually set via custom data
         UpdateFrequency freq = UpdateFrequency.Update100;
-        float maxSpeed = 50;    //UNIT?
-        float brakeDist = 5;      //UNIT?
+        double maxSpeed = 50;    //UNIT?
+        double brakeDist = 5;      //UNIT?
 
 
 
@@ -163,7 +162,7 @@ namespace IngameScript
 			ini.Set(sec, "lastConfig", lastConfig);
 			ini.Set(sec, "tickCounter", tickCounter);
 			ini.Set(sec, "name", name);
-			ini.Set(sec, "UpdateFrequency", (freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1") );
+			ini.Set(sec, "UpdateFrequency", freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1"));
 			ini.Set(sec, "maxSpeed", maxSpeed);
 			ini.Set(sec, "brakeDist", brakeDist);
 			String IDs = "";
@@ -190,17 +189,17 @@ namespace IngameScript
 				String freqString;
 				String IDs;
                 String sec = "Save";
-				ini.Get(sec, "lastID").TryGetInt64(out lastID);
+				ini.Get(sec, "lastID").TryGetInt32(out lastID);
 				ini.Get(sec, "lastConfig").TryGetString(out lastConfig);
-				ini.Get(sec, "tickCounter").TryGetInt64(out tickCounter);
+				ini.Get(sec, "tickCounter").TryGetInt32(out tickCounter);
 				ini.Get(sec, "name").TryGetString(out name);
 				ini.Get(sec, "UpdateFrequency").TryGetString(out freqString);
-				ini.Get(sec, "maxSpeed").TryGetFloat(out maxSpeed);
-				ini.Get(sec, "brakeDist").TryGetFloat(out brakeDist);
+				ini.Get(sec, "maxSpeed").TryGetDouble(out maxSpeed);
+				ini.Get(sec, "brakeDist").TryGetDouble(out brakeDist);
 				ini.Get(sec, "IDs").TryGetString(out IDs);
 				
 				freq = (freqString == "100" ? UpdateFrequency.Update100 : (freqString == "10" ? UpdateFrequency.Update10 : UpdateFrequency.Update1));
-				String[] stationIDs = IDs.split(" ");
+				String[] stationIDs = IDs.Split(' ');
 				
 				String stationName;
 				int stationStopTime;
@@ -211,17 +210,17 @@ namespace IngameScript
 				foreach (String ID in stationIDs) {
 					sec = "Station " + ID;
 					ini.Get(sec, "name").TryGetString(out stationName);
-					ini.Get(sec, "stopTime").TryGetInt64(out stationStopTime);
-					ini.Get(sec, "offset").TryGetInt64(out stationOffset);
+					ini.Get(sec, "stopTime").TryGetInt32(out stationStopTime);
+					ini.Get(sec, "offset").TryGetInt32(out stationOffset);
 					ini.Get(sec, "position").TryGetString(out positionString);
-					String[] coords = positionString.Split(" ");
-					stationPosition = new Vector3((float)coords[0], (float)coords[1], (float)coords[2]);
+					String[] coords = positionString.Split(' ');
+					stationPosition = new Vector3(float.Parse(coords[0]), float.Parse(coords[1]), float.Parse(coords[2]));
 					
 					
-					Station temp = new Station(stationPosition, (int)ID, stationName);
+					Station temp = new Station(stationPosition, int.Parse(ID), stationName);
 					temp.stopTime = stationStopTime;
 					temp.offset = stationOffset;
-					stations.add(temp);
+					stations.Add(temp);
 				}
 				
 				
@@ -326,7 +325,7 @@ namespace IngameScript
                             }
                             else if (vertDist > brakeDist)
                             {
-                                upwards(1, maxSpeed);
+                                upwards(1, (float)maxSpeed);
                             }
                             else
                             {
@@ -344,7 +343,7 @@ namespace IngameScript
                             }
                             else if (vertDist < -brakeDist)
                             {
-                                downwards(1, maxSpeed);
+                                downwards(1, (float)maxSpeed);
                             }
                             else
                             {
@@ -640,7 +639,7 @@ namespace IngameScript
         public int ID { get; }   //-1 if marker
         public int stopTime { set; get; }
         public int offset { set; get; }
-        Vector3 position { get; }
+        public Vector3 position { get; }
 
         public Station(Vector3 position, int ID)
         {
