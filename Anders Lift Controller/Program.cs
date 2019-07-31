@@ -177,7 +177,8 @@ namespace IngameScript
 				ini.Set(sec, "name", station.name);
 				ini.Set(sec, "stopTime", station.stopTime);
 				ini.Set(sec, "offset", station.offset);
-				ini.Set(sec, "Position", station.position);
+				Vector3 position = station.position;
+				ini.Set(sec, "Position", position.X + " " + position.Y + " " + position.Z);
 			}
         }
 
@@ -204,14 +205,18 @@ namespace IngameScript
 				String stationName;
 				int stationStopTime;
 				int stationOffset;
-				String stationPosition;
+				String positionString;
+				Vector3 stationPosition;
 				
 				foreach (String ID in stationIDs) {
 					sec = "Station " + ID;
 					ini.Get(sec, "name").TryGetString(out stationName);
 					ini.Get(sec, "stopTime").TryGetInt64(out stationStopTime);
 					ini.Get(sec, "offset").TryGetInt64(out stationOffset);
-					ini.Get(sec, "position").TryGetString(out stationPositon);
+					ini.Get(sec, "position").TryGetString(out positionString);
+					String[] coords = positionString.Split(" ");
+					stationPosition = new Vector3((float)coords[0], (float)coords[1], (float)coords[2]);
+					
 					
 					Station temp = new Station(stationPosition, (int)ID, stationName);
 					temp.stopTime = stationStopTime;
