@@ -236,21 +236,140 @@ namespace IngameScript
             String customData = Me.CustomData;
             if (customData != lastConfig && customData != "" && ini.TryParse(customData))
             {
-                //TODO: load manual customization options here
-                /* Stations
-                 * 
-                 * 
-                 * IMPORTANT:
-                 * save current state to storage
-                 * 
-                 */
+                String sec = " General ";
+                if (ini.ContainsSection(sec))
+                {
+                    if (ini.ContainsKey(new MyIniKey(sec, "name")))
+                    {
+                        if (!ini.Get(sec, "name").TryGetString(out name))
+                        {
+                            //do error message 
+                        }
+                    }
+                    else
+                    {
+                        //do error message
+                    }
+
+                    if (ini.ContainsKey(new MyIniKey(sec, "UpdateFrequency")))
+                    {
+                        String freqString;
+                        if (ini.Get(sec, "UpdateFrequency").TryGetString(out freqString))
+                        {
+                            //freq = (freqString == "100" ? UpdateFrequency.Update100 : (freqString == "10" ? UpdateFrequency.Update10 : UpdateFrequency.Update1));
+                            if (freqString.Trim() == "100") freq = UpdateFrequency.Update100;
+                            else if (freqString.Trim() == "10") freq = UpdateFrequency.Update10;
+                            else if (freqString.Trim() == "1") freq = UpdateFrequency.Update1;
+                            else
+                            {
+                                //do error message
+                            }
+                        }
+                        else
+                        {
+                            //do error message
+                        }
+
+                    }
+
+                    if (ini.ContainsKey(new MyIniKey(sec, "maxSpeed")))
+                    {
+                        if (!ini.Get(sec, "maxSpeed").TryGetDouble(out maxSpeed))
+                        {
+                            //do error message
+                        }
+                    }
+                    else
+                    {
+                        //do error message
+                    }
+
+                    if (ini.ContainsKey(new MyIniKey(sec, "brakeDist")))
+                    {
+                        if (!ini.Get(sec, "brakeDist").TryGetDouble(out brakeDist))
+                        {
+                            //do error message
+                        }
+                    }
+                    else
+                    {
+                        //do error message
+                    }
+                }
+                else
+                {
+                    //do error message
+                }
+
+                foreach (Station station in stations)
+                {
+                    sec = "Station " + station.ID;
+                    if (ini.ContainsSection(sec))
+                    {
+                        if (ini.ContainsKey(new MyIniKey(sec, "name")))
+                        {
+                            String temp;
+                            if (ini.Get(sec, "name").TryGetString(out temp))
+                            {
+                                station.name = temp;
+                            }
+                            else
+                            {
+                                //do error message
+                            }
+                        }
+                        else
+                        {
+                            //do error message
+                        }
+
+                        if (ini.ContainsKey(new MyIniKey(sec, "stopTime")))
+                        {
+                            int temp;
+                            if (ini.Get(sec, "stopTime").TryGetInt32(out temp))
+                            {
+                                station.stopTime = temp;
+                            }
+                            else
+                            {
+                                //do error message
+                            }
+                        }
+                        else
+                        {
+                            //do error message
+                        }
+
+                        if (ini.ContainsKey(new MyIniKey(sec, "offset")))
+                        {
+                            int temp;
+                            if (ini.Get(sec, "offset").TryGetInt32(out temp))
+                            {
+                                station.offset = temp;
+                            }
+                            else
+                            {
+                                //do error message
+                            }
+                        }
+                        else
+                        {
+                            //do error message
+                        }
+                    }
+                    else
+                    {
+                        //do error message
+                    }
+
+                }
             }
         }
 
         private void saveCustomData()
         {
             //TODO: save current state to custom data
-			ini.Clear()
+            ini.Clear();
 			String sec = " General ";
 			ini.Set(sec, "name", name);
 			ini.Set(sec, "UpdateFrequency", freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1"));
