@@ -250,6 +250,19 @@ namespace IngameScript
         private void saveCustomData()
         {
             //TODO: save current state to custom data
+			ini.Clear()
+			String sec = " General ";
+			ini.Set(sec, "name", name);
+			ini.Set(sec, "UpdateFrequency", freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1"));
+			ini.Set(sec, "maxSpeed", maxSpeed);
+			ini.Set(sec, "brakeDist", brakeDist);
+			
+			foreach (Station station in stations) {
+				sec = "Station " + station.ID;
+				ini.Set(sec, "name", station.name);
+				ini.Set(sec, "stopTime", station.stopTime);
+				ini.Set(sec, "offset", station.offset);
+			}
         }
 
 
