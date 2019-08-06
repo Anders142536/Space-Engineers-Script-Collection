@@ -19,6 +19,16 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
+/*
+ToDo:
+Make antenna listen to only "elevator COMMAND ARGUMENTS" and commands themselfs still work without the leading "elevator"
+take care of loading and saving issues
+add testing prints
+setup wheels automatically by comparing the forward vector with the way the wheels are facing
+add thruster support
+
+
+*/
         bool stopped;
         bool direction;
         Station next;
