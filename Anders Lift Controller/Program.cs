@@ -364,6 +364,9 @@ namespace IngameScript
 
                 }
             }
+			
+			//if we came until here without an error, save to storage to save the changes
+			Save();
         }
 
         private void saveCustomData()
