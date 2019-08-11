@@ -386,8 +386,12 @@ add thruster support
 			String sec = " General ";
 			ini.Set(sec, "name", name);
 			ini.Set(sec, "UpdateFrequency", freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1"));
+            ini.SetComment(sec, "UdpateFrequency", "Set this to either 100, 10 or 1");
 			ini.Set(sec, "maxSpeed", maxSpeed);
+            //TODO check this!
+            ini.SetComment(sec, "maxSpeed", "Unit: m/s");
 			ini.Set(sec, "brakeDist", brakeDist);
+            ini.SetComment(sec, "brakeDist", "At what distance to a station should the wagon start braking?");
 			
 			foreach (Station station in stations) {
 				sec = "Station " + station.ID;
