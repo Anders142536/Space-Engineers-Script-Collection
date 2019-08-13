@@ -397,7 +397,7 @@ namespace IngameScript
             {
                 for (int i = 0; i < wheels.Count; i++)
                 {
-                    wheels[i].setStrenght(massRatio)
+                    wheels[i].setStrenght(massRatio);
                 }
             }
         }

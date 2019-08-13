@@ -35,6 +35,7 @@ add thruster support
         Station marker;
         DateTime stopStamp = new DateTime();
         List<Station> stations = new List<Station>();
+        Queue<string> logQueue = new Queue<string>();
         String name = "Unnamed";
         int lastID = 0;
         String lastConfig = "";
@@ -98,6 +99,31 @@ add thruster support
 
             loadStorage();
             loadCustomData();
+        }
+
+        public void writeLog(String toWrite, bool writeEcho = false)
+        {
+            if (toWrite != null)
+            {
+                logQueue.Enqueue(toWrite);
+                if (logQueue.Count > 19) logQueue.Dequeue();
+            }
+
+            //if we need to write the log instead of just adding stuff for a later echo output
+            if (writeEcho)
+            {
+                const String header = "\n                                          LOG\n";
+                String logText = "";
+                String[] logLines = logQueue.ToArray();
+
+                //adding all log lines into a single string
+                for (int i = 0; i < logLines.Length; i++)
+                {
+                    logText += "\n" + logLines[i];
+                }
+                
+                Echo(logText);
+            }
         }
 
         //returns an antenna if there are any
@@ -253,7 +279,7 @@ add thruster support
                     {
                         if (!ini.Get(sec, "name").TryGetString(out name))
                         {
-                            //do error message 
+                            writeLog("Name of wagon could not be parsed as string"); 
                         }
                     }
                     else
