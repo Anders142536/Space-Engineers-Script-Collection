@@ -284,7 +284,7 @@ add thruster support
                     }
                     else
                     {
-                        //do error message
+                        writeLog("Field \"name\" was not found in [" + sec + "]");
                     }
 
                     if (ini.ContainsKey(new MyIniKey(sec, "UpdateFrequency")))
@@ -303,38 +303,42 @@ add thruster support
                         }
                         else
                         {
-                            //do error message
+                            writeLog("UpdateFrequency could not be parsed as string");
                         }
 
+                    }
+                    else
+                    {
+                        writeLog("Field \"UpdateFrequency\" was not found in [" + sec + "]");
                     }
 
                     if (ini.ContainsKey(new MyIniKey(sec, "maxSpeed")))
                     {
                         if (!ini.Get(sec, "maxSpeed").TryGetDouble(out maxSpeed))
                         {
-                            //do error message
+                            writeLog("maxSpeed could not be parsed as decimal");
                         }
                     }
                     else
                     {
-                        //do error message
+                        writeLog("Field \"maxSpeed\" was not found in [" + sec + "]");
                     }
 
                     if (ini.ContainsKey(new MyIniKey(sec, "brakeDist")))
                     {
                         if (!ini.Get(sec, "brakeDist").TryGetDouble(out brakeDist))
                         {
-                            //do error message
+                            writeLog("brakeDist could not be parsed as decimal");
                         }
                     }
                     else
                     {
-                        //do error message
+                        writeLog("Field \"brakeDist\" was not found in [" + sec + "]");
                     }
                 }
                 else
                 {
-                    //do error message
+                    writeLog("Section ["+ sec + "] was not found");
                 }
 
                 foreach (Station station in stations)
