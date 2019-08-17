@@ -67,38 +67,45 @@ add thruster support
          * * * * */
         public Program()
         {
-            //addings the commands to the dictionary
-            commands = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase);
-            commands["request"] = request;
-            commands["addstation"] = addStation;
-            commands["removestation"] = removeStation;
-            commands["setmarker"] = setMarker;
-
-            //fetching blocks
-            forward = Me.WorldMatrix.Forward;
-            List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
-            GridTerminalSystem.GetBlocks(blocks);
-            getAntenna(ref blocks, out antenna);
-            getTextPanels(ref blocks, out screens);
-            getController(ref blocks, out controller);
-            getWheels(ref blocks, out wheels);
-            getThrusters(ref blocks, out thrustersForward, out thrustersBackward);
-            name = antenna.HudText;
-
-            Runtime.UpdateFrequency = freq;
-
-            //if there is the controller missing we cannot do anything
-            // PANIC I REPEAT PANIC
-            if (controller == null)
+            try
             {
-                Echo(" > PANIC <\n" +
-                    "There is no controller. Please add a Remote Control or Cockpit to this grid and recompile.");
-                Me.Enabled = false;
-                return;
-            }
+                //addings the commands to the dictionary
+                commands = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase);
+                commands["request"] = request;
+                commands["addstation"] = addStation;
+                commands["removestation"] = removeStation;
+                commands["setmarker"] = setMarker;
 
-            loadStorage();
-            loadCustomData();
+                //fetching blocks
+                forward = Me.WorldMatrix.Forward;
+                List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
+                GridTerminalSystem.GetBlocks(blocks);
+                getAntenna(ref blocks, out antenna);
+                getTextPanels(ref blocks, out screens);
+                getController(ref blocks, out controller);
+                getWheels(ref blocks, out wheels);
+                getThrusters(ref blocks, out thrustersForward, out thrustersBackward);
+                name = antenna.HudText;
+
+                Runtime.UpdateFrequency = freq;
+
+                //if there is the controller missing we cannot do anything
+                // PANIC I REPEAT PANIC
+                if (controller == null)
+                {
+                    Echo(" > PANIC <\n" +
+                        "There is no controller. Please add a Remote Control or Cockpit to this grid and recompile.");
+                    Me.Enabled = false;
+                    return;
+                }
+
+                loadStorage();
+                loadCustomData();
+            } catch (Exception e)
+            {
+                writeLog(e.Message + "\n" + e.StackTrace, true);
+                
+            }
         }
 
         public void writeLog(String toWrite, bool writeEcho = false)
@@ -298,7 +305,7 @@ add thruster support
                             else if (freqString.Trim() == "1") freq = UpdateFrequency.Update1;
                             else
                             {
-                                //do error message
+                                writeLog("Updatefrequency can only be 100, 10 or 1");
                             }
                         }
                         else
@@ -355,12 +362,12 @@ add thruster support
                             }
                             else
                             {
-                                //do error message
+                                writeLog("name could not be parsed as string for station [" + sec + "]");
                             }
                         }
                         else
                         {
-                            //do error message
+                            writeLog("Field \"name\" was not found for station [" + sec + "]");
                         }
 
                         if (ini.ContainsKey(new MyIniKey(sec, "stopTime")))
@@ -372,12 +379,12 @@ add thruster support
                             }
                             else
                             {
-                                //do error message
+                                writeLog("stopTime could not be parsed as integer for station [" + sec + "]");
                             }
                         }
                         else
                         {
-                            //do error message
+                            writeLog("Field \"stopTime\" was not found for station [" + sec + "]");
                         }
 
                         if (ini.ContainsKey(new MyIniKey(sec, "offset")))
@@ -389,17 +396,17 @@ add thruster support
                             }
                             else
                             {
-                                //do error message
+                                writeLog("offset could not be parsed as integer for station [" + sec + "]");
                             }
                         }
                         else
                         {
-                            //do error message
+                            writeLog("Field \"offset\" was not found for station [" + sec + "]");
                         }
                     }
                     else
                     {
-                        //do error message
+                        writeLog("No section found for station [" + sec + "]");
                     }
 
                 }
@@ -438,209 +445,215 @@ add thruster support
          * * * * * * * * * */
         public void Main(string argument, UpdateType updateSource)
         {
-            //if a command is communicated to the script
-            if ((updateSource & (UpdateType.Antenna | UpdateType.Trigger | UpdateType.Terminal)) != 0)
+            try
             {
-                //if arguments are actually given
-                if (cline.TryParse(argument))
+                //if a command is communicated to the script
+                if ((updateSource & (UpdateType.Antenna | UpdateType.Trigger | UpdateType.Terminal)) != 0)
                 {
-                    Action cAction;
-
-                    String command = cline.Argument(0).ToLower();
-
-                    if (command == null)
+                    //if arguments are actually given
+                    if (cline.TryParse(argument))
                     {
-                        Echo("No Command was given!");
-                    }
-                    else if (commands.TryGetValue(command, out cAction))
-                    {
-                        cAction();
-                    }
-                    else
-                    {
-                        Echo("Unknown Command!");
-                    }
-                }
-            }
+                        Action cAction;
 
-            //if the elevator triggered itself
-            if ((updateSource & (UpdateType.Update100 | UpdateType.Update1)) != 0)
-            {
-                //raising the counter
-                if ((updateSource & UpdateType.Update1) != 0) tickCounter++;
-                else tickCounter += 100;
+                        String command = cline.Argument(0).ToLower();
 
-                //after a set time window, check custom data for updates
-                if (tickCounter > 300)
-                {
-                    //TODO: check wether or not this actually triggers and if the %= actually works
-                    loadCustomData();
-                    tickCounter %= 300;
-                }
-
-                if (stopped)
-                {
-                    //converting the single number given in seconds into comparable ticks
-                    if ((DateTime.Now.Ticks - stopStamp.Ticks) > next.stopTime * 10000000)
-                    {
-                        stopped = false;
-                        next = null;
-                    }
-                }
-                else  //if not stopped
-                {
-                    //if there is a station we want to drive to
-                    if (next != null)
-                    {
-                        //check the distance to the station we want to drive to and set velocities accordingly
-                        //TODO: IN WHAT UNIT!?
-                        float vertDist = next.getVectorFromPosition(Me.GetPosition()).Dot(forward) + next.offset;
-                        if (direction)
+                        if (command == null)
                         {
-                            //if we reached our station
-                            if (vertDist < 0)
-                            {
-                                stop();
-                            }
-                            else if (vertDist > brakeDist)
-                            {
-                                upwards(1, (float)maxSpeed);
-                            }
-                            else
-                            {
-                                float currentSpeed = getSpeed();
-                                float wantedSpeed = Math.Max(vertDist * 10, 1);
-                                if (currentSpeed < wantedSpeed) upwards(1, wantedSpeed);
-                                else downwards(1, currentSpeed - wantedSpeed);
-                            }
+                            Echo("No Command was given!");
                         }
-                        if (!direction)
+                        else if (commands.TryGetValue(command, out cAction))
                         {
-                            if (vertDist > 0)
-                            {
-                                stop();
-                            }
-                            else if (vertDist < -brakeDist)
-                            {
-                                downwards(1, (float)maxSpeed);
-                            }
-                            else
-                            {
-                                //we need to calculate with negative numbers, which looks a bit odd at first
-                                float currentSpeed = getSpeed();
-                                float wantedSpeed = Math.Min(vertDist * 3, -1);
-                                if (currentSpeed > wantedSpeed) downwards(1, wantedSpeed);
-                                else upwards(1, wantedSpeed - currentSpeed);
-                            }
+                            cAction();
                         }
-
-                    }
-                    else  //if there is no station we currently drive to
-                    {
-                        Station closestUp = null;
-                        Station closestDown = null;
-                        float distClosestUp = 0;
-                        float distClosestDown = 0;
-                        //check for requested stations
-                        for (int i = 0; i < stations.Count; i++)
+                        else
                         {
-                            //oh, found one!
-                            if (stations[i].requested)
+                            Echo("Unknown Command!");
+                        }
+                    }
+                }
+
+                //if the elevator triggered itself
+                if ((updateSource & (UpdateType.Update100 | UpdateType.Update1)) != 0)
+                {
+                    //raising the counter
+                    if ((updateSource & UpdateType.Update1) != 0) tickCounter++;
+                    else tickCounter += 100;
+
+                    //after a set time window, check custom data for updates
+                    if (tickCounter > 300)
+                    {
+                        //TODO: check wether or not this actually triggers and if the %= actually works
+                        loadCustomData();
+                        tickCounter %= 300;
+                    }
+
+                    if (stopped)
+                    {
+                        //converting the single number given in seconds into comparable ticks
+                        if ((DateTime.Now.Ticks - stopStamp.Ticks) > next.stopTime * 10000000)
+                        {
+                            stopped = false;
+                            next = null;
+                        }
+                    }
+                    else  //if not stopped
+                    {
+                        //if there is a station we want to drive to
+                        if (next != null)
+                        {
+                            //check the distance to the station we want to drive to and set velocities accordingly
+                            //TODO: IN WHAT UNIT!?
+                            float vertDist = next.getVectorFromPosition(Me.GetPosition()).Dot(forward) + next.offset;
+                            if (direction)
                             {
-                                float vertDist = stations[i].getVectorFromPosition(Me.GetPosition()).Dot(forward);
-                                if (vertDist > 1)
+                                //if we reached our station
+                                if (vertDist < 0)
                                 {
-                                    //only hold the closest ones, discard the rest
-                                    if (closestUp == null)
+                                    stop();
+                                }
+                                else if (vertDist > brakeDist)
+                                {
+                                    upwards(1, (float)maxSpeed);
+                                }
+                                else
+                                {
+                                    float currentSpeed = getSpeed();
+                                    float wantedSpeed = Math.Max(vertDist * 10, 1);
+                                    if (currentSpeed < wantedSpeed) upwards(1, wantedSpeed);
+                                    else downwards(1, currentSpeed - wantedSpeed);
+                                }
+                            }
+                            if (!direction)
+                            {
+                                if (vertDist > 0)
+                                {
+                                    stop();
+                                }
+                                else if (vertDist < -brakeDist)
+                                {
+                                    downwards(1, (float)maxSpeed);
+                                }
+                                else
+                                {
+                                    //we need to calculate with negative numbers, which looks a bit odd at first
+                                    float currentSpeed = getSpeed();
+                                    float wantedSpeed = Math.Min(vertDist * 3, -1);
+                                    if (currentSpeed > wantedSpeed) downwards(1, wantedSpeed);
+                                    else upwards(1, wantedSpeed - currentSpeed);
+                                }
+                            }
+
+                        }
+                        else  //if there is no station we currently drive to
+                        {
+                            Station closestUp = null;
+                            Station closestDown = null;
+                            float distClosestUp = 0;
+                            float distClosestDown = 0;
+                            //check for requested stations
+                            for (int i = 0; i < stations.Count; i++)
+                            {
+                                //oh, found one!
+                                if (stations[i].requested)
+                                {
+                                    float vertDist = stations[i].getVectorFromPosition(Me.GetPosition()).Dot(forward);
+                                    if (vertDist > 1)
                                     {
-                                        closestUp = stations[i];
-                                        distClosestUp = vertDist;
-                                    }
-                                    else
-                                    {
-                                        if (vertDist < distClosestUp)
+                                        //only hold the closest ones, discard the rest
+                                        if (closestUp == null)
                                         {
                                             closestUp = stations[i];
                                             distClosestUp = vertDist;
                                         }
+                                        else
+                                        {
+                                            if (vertDist < distClosestUp)
+                                            {
+                                                closestUp = stations[i];
+                                                distClosestUp = vertDist;
+                                            }
+                                        }
                                     }
-                                }
-                                else if (vertDist < -1)
-                                {
-                                    //only hold the closest ones, discard the rest
-                                    if (closestDown == null)
+                                    else if (vertDist < -1)
                                     {
-                                        closestDown = stations[i];
-                                        distClosestDown = vertDist;
-                                    }
-                                    else
-                                    {
-                                        if (vertDist > distClosestDown)
+                                        //only hold the closest ones, discard the rest
+                                        if (closestDown == null)
                                         {
                                             closestDown = stations[i];
                                             distClosestDown = vertDist;
                                         }
+                                        else
+                                        {
+                                            if (vertDist > distClosestDown)
+                                            {
+                                                closestDown = stations[i];
+                                                distClosestDown = vertDist;
+                                            }
+                                        }
+                                    }
+                                    //if a requested station is not more than 1m away it will be the station we are currently stopped in.
+                                    //the elevator should not move in this case, just open the door of the station
+                                    //maybe the player was afk and forgot to leave on time?
+                                    else
+                                    {
+                                        antenna.TransmitMessage("open station " + stations[i].name);
+                                        stations[i].requested = false;
                                     }
                                 }
-                                //if a requested station is not more than 1m away it will be the station we are currently stopped in.
-                                //the elevator should not move in this case, just open the door of the station
-                                //maybe the player was afk and forgot to leave on time?
+                            }
+                            if (direction)
+                            {
+                                //if there are further stations requested in the direction we are heading
+                                if (closestUp != null)
+                                {
+                                    next = closestUp;
+                                }
+                                //if there are no more stations in the direction we are currently heading
+                                else if (closestDown != null)
+                                {
+                                    next = closestDown;
+                                    direction = false;
+                                }
+                                //if there are no more stations requested at all
                                 else
                                 {
-                                    antenna.TransmitMessage("open station " + stations[i].name);
-                                    stations[i].requested = false;
+                                    Runtime.UpdateFrequency = UpdateFrequency.None;
                                 }
                             }
-                        }
-                        if (direction)
-                        {
-                            //if there are further stations requested in the direction we are heading
-                            if (closestUp != null)
-                            {
-                                next = closestUp;
-                            }
-                            //if there are no more stations in the direction we are currently heading
-                            else if (closestDown != null)
-                            {
-                                next = closestDown;
-                                direction = false;
-                            }
-                            //if there are no more stations requested at all
                             else
                             {
-                                Runtime.UpdateFrequency = UpdateFrequency.None;
-                            }
-                        }
-                        else
-                        {
-                            //if there are further stations requested in the direction we are heading
-                            if (closestDown != null)
-                            {
-                                next = closestDown;
-                            }
-                            //if there are no more stations in the direction we are currently heading
-                            else if (closestUp != null)
-                            {
-                                next = closestUp;
-                                direction = true;
-                            }
-                            //if there are no more stations requested at all
-                            else
-                            {
-                                Runtime.UpdateFrequency = UpdateFrequency.None;
+                                //if there are further stations requested in the direction we are heading
+                                if (closestDown != null)
+                                {
+                                    next = closestDown;
+                                }
+                                //if there are no more stations in the direction we are currently heading
+                                else if (closestUp != null)
+                                {
+                                    next = closestUp;
+                                    direction = true;
+                                }
+                                //if there are no more stations requested at all
+                                else
+                                {
+                                    Runtime.UpdateFrequency = UpdateFrequency.None;
+                                }
                             }
                         }
                     }
                 }
+
+                printScreens();
+
+                //printing a little manual into the echo part
+                writeLog("    COMMANDS" +
+                    "\nrequest STATIONNAME: tells the machine to go to this station" +
+                    "\naddStation NAME X Y Z: adds the station with the given name and position to the elevator stations" +
+                    "\nremoveStation NAME: removes the station with the given name from the elevator stations", true);
+            } catch (Exception e)
+            {
+                writeLog(e.Message + "\n" + e.StackTrace, true);
             }
-
-            printScreens();
-
-            //printing a little manual into the echo part
-            Echo("    COMMANDS" +
-                "\nrequest STATIONNAME: tells the machine to go to this station" +
-                "\naddStation NAME X Y Z: adds the station with the given name and position to the elevator stations" +
-                "\nremoveStation NAME: removes the station with the given name from the elevator stations");
         }
 
         //sets the request state of the station that fits the given name or id to true
