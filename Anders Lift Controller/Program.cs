@@ -21,8 +21,8 @@ namespace IngameScript
     {
         /*
         ToDo:
-        Make antenna listen to only "elevator COMMAND ARGUMENTS" and commands themselfs still work without the leading "elevator"
-        take care of loading and saving issues
+        Make antenna listen to only "elevator NAME COMMAND ARGUMENTS" and commands themselfs still work without the leading "elevator NAME"
+        - take care of loading and saving issues
         add testing prints
         setup wheels automatically by comparing the forward vector with the way the wheels are facing
         add thruster support
@@ -54,9 +54,9 @@ namespace IngameScript
         Dictionary<string, Action> commands;
         MyCommandLine cline = new MyCommandLine();
         MyIni ini = new MyIni();
+        UpdateFrequency freq = UpdateFrequency.Update100;
 
         //values to be manually set via custom data
-        UpdateFrequency freq = UpdateFrequency.Update100;
         double maxSpeed = 50;    //UNIT?
         double brakeDist = 5;      //UNIT?
 
@@ -206,7 +206,6 @@ namespace IngameScript
 			ini.Set(sec, "lastConfig", lastConfig);
 			ini.Set(sec, "tickCounter", tickCounter);
 			ini.Set(sec, "name", name);
-			ini.Set(sec, "UpdateFrequency", freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1"));
 			ini.Set(sec, "maxSpeed", maxSpeed);
 			ini.Set(sec, "brakeDist", brakeDist);
 			String IDs = "";
@@ -237,12 +236,10 @@ namespace IngameScript
 				ini.Get(sec, "lastConfig").TryGetString(out lastConfig);
 				ini.Get(sec, "tickCounter").TryGetInt32(out tickCounter);
 				ini.Get(sec, "name").TryGetString(out name);
-				ini.Get(sec, "UpdateFrequency").TryGetString(out freqString);
 				ini.Get(sec, "maxSpeed").TryGetDouble(out maxSpeed);
 				ini.Get(sec, "brakeDist").TryGetDouble(out brakeDist);
 				ini.Get(sec, "IDs").TryGetString(out IDs);
 				
-				freq = (freqString == "100" ? UpdateFrequency.Update100 : (freqString == "10" ? UpdateFrequency.Update10 : UpdateFrequency.Update1));
 				String[] stationIDs = IDs.Split(' ');
 				
 				String stationName;
@@ -294,32 +291,7 @@ namespace IngameScript
                     {
                         writeLog("Field \"name\" was not found in [" + sec + "]");
                     }
-
-                    if (ini.ContainsKey(new MyIniKey(sec, "UpdateFrequency")))
-                    {
-                        String freqString;
-                        if (ini.Get(sec, "UpdateFrequency").TryGetString(out freqString))
-                        {
-                            //freq = (freqString == "100" ? UpdateFrequency.Update100 : (freqString == "10" ? UpdateFrequency.Update10 : UpdateFrequency.Update1));
-                            if (freqString.Trim() == "100") freq = UpdateFrequency.Update100;
-                            else if (freqString.Trim() == "10") freq = UpdateFrequency.Update10;
-                            else if (freqString.Trim() == "1") freq = UpdateFrequency.Update1;
-                            else
-                            {
-                                writeLog("Updatefrequency can only be 100, 10 or 1");
-                            }
-                        }
-                        else
-                        {
-                            writeLog("UpdateFrequency could not be parsed as string");
-                        }
-
-                    }
-                    else
-                    {
-                        writeLog("Field \"UpdateFrequency\" was not found in [" + sec + "]");
-                    }
-
+					
                     if (ini.ContainsKey(new MyIniKey(sec, "maxSpeed")))
                     {
                         if (!ini.Get(sec, "maxSpeed").TryGetDouble(out maxSpeed))
@@ -414,6 +386,7 @@ namespace IngameScript
             }
 			
 			//if we came until here without an error, save to storage to save the changes
+			lastConfig = Me.CustomData;
 			Save();
         }
 
@@ -423,8 +396,6 @@ namespace IngameScript
             ini.Clear();
 			String sec = " General ";
 			ini.Set(sec, "name", name);
-			ini.Set(sec, "UpdateFrequency", freq == UpdateFrequency.Update100 ? "100" : (freq == UpdateFrequency.Update10 ? "10" : "1"));
-            ini.SetComment(sec, "UdpateFrequency", "Set this to either 100, 10 or 1");
 			ini.Set(sec, "maxSpeed", maxSpeed);
             //TODO check this!
             ini.SetComment(sec, "maxSpeed", "Unit: m/s");
@@ -454,22 +425,36 @@ namespace IngameScript
                     //if arguments are actually given
                     if (cline.TryParse(argument))
                     {
-                        Action cAction;
-
                         String command = cline.Argument(0).ToLower();
-
-                        if (command == null)
-                        {
-                            Echo("No Command was given!");
-                        }
-                        else if (commands.TryGetValue(command, out cAction))
-                        {
-                            cAction();
-                        }
-                        else
-                        {
-                            Echo("Unknown Command!");
-                        }
+						int indexOffset = 0;
+						bool meantForMe = true;
+						
+						//this could be handled more elegantly, but for readibility's sake it is done like this
+						if ((updateSource & UpdateType.Antenna) != 0 && command == "elevator" && cline.Argument(1).ToLower() == name) indexOffset += 2;
+						else meantForMe = false;
+                        Action cAction;
+						
+						//if the command was not sent via antenna and was meant for a different script
+						if (meantForMe) {
+							switch (cline.Argument(0 + indexOffset).ToLower())
+							{
+								case "request":
+									request();
+									break;
+								case "addstation":
+									addStation();
+									break;
+								case "removestation":
+									removeStation();
+									break;
+								case "setmarker":
+									setMarker();
+									break;
+								default:
+									writeLog("Unknown Command!");
+								break;
+							}
+						}
                     }
                 }
 
@@ -484,7 +469,7 @@ namespace IngameScript
                     if (tickCounter > 300)
                     {
                         //TODO: check wether or not this actually triggers and if the %= actually works
-                        loadCustomData();
+                        if (Me.CustomData != lastConfig) loadCustomData();
                         tickCounter %= 300;
                     }
 
