@@ -23,15 +23,13 @@ namespace IngameScript
         ToDo:
         Make antenna listen to only "elevator NAME COMMAND ARGUMENTS" and commands themselfs still work without the leading "elevator NAME"
         - take care of loading and saving issues
-        add testing prints
-        setup wheels automatically by comparing the forward vector with the way the wheels are facing
-        add thruster support
 
 
         */
 
         bool stopped;
         bool direction;
+        bool debug;
         Station next;
         Station marker;
         DateTime stopStamp = new DateTime();
@@ -206,6 +204,7 @@ namespace IngameScript
 			ini.Set(sec, "lastConfig", lastConfig);
 			ini.Set(sec, "tickCounter", tickCounter);
 			ini.Set(sec, "name", name);
+            ini.Set(sec, "debug", debug);
 			ini.Set(sec, "maxSpeed", maxSpeed);
 			ini.Set(sec, "brakeDist", brakeDist);
 			String IDs = "";
@@ -236,6 +235,7 @@ namespace IngameScript
 				ini.Get(sec, "lastConfig").TryGetString(out lastConfig);
 				ini.Get(sec, "tickCounter").TryGetInt32(out tickCounter);
 				ini.Get(sec, "name").TryGetString(out name);
+                ini.Get(sec, "debug").TryGetBoolean(out debug);
 				ini.Get(sec, "maxSpeed").TryGetDouble(out maxSpeed);
 				ini.Get(sec, "brakeDist").TryGetDouble(out brakeDist);
 				ini.Get(sec, "IDs").TryGetString(out IDs);
@@ -450,6 +450,9 @@ namespace IngameScript
 								case "setmarker":
 									setMarker();
 									break;
+                                case "debug":
+                                    debug = !debug;
+                                    break;
 								default:
 									writeLog("Unknown Command!");
 								break;
@@ -726,9 +729,13 @@ namespace IngameScript
             marker = new Station(new Vector3(x, y, z), -1);
         }
 
-        private void printScreens()
+        //prints a given string to all screens
+        private void printScreens(String toPrint)
         {
-
+            foreach (IMyTextPanel screen in screens)
+            {
+                screen.WriteText(toPrint);
+            }
         }
 
         //returns wether or not the given Station is closer than the next station
@@ -747,13 +754,14 @@ namespace IngameScript
         {
             if (stations.Count == 0) return "  There are no stations listed.";
             StringBuilder result = new StringBuilder();
-            for (int i = 0; i < stations.Count; i++)
+            
+            foreach (Station station in stations)
             {
-                //not adding stations that have "secret" in their name
-                if (!stations[i].name.ToLower().Contains("secret"))
+                if (!station.name.ToLower().Contains("secret"))
                 {
-                    result.Append("\n  " + stations[i].name +
-                        "\n    isRequested: " + stations[i].requested);
+
+                    result.Append((station.requested ? "\n x " : "    ") +
+                        station.name);
                 }
             }
             return result.ToString();
