@@ -66,15 +66,10 @@ namespace IngameScript
          * * * * */
         public Program()
         {
+			if (debug) writeLog("starting constructor", true);
+			boolean canRun = true;
             try
             {
-                //addings the commands to the dictionary
-                commands = new Dictionary<string, Action>(StringComparer.OrdinalIgnoreCase);
-                commands["request"] = request;
-                commands["addstation"] = addStation;
-                commands["removestation"] = removeStation;
-                commands["setmarker"] = setMarker;
-
                 //fetching blocks
                 forward = Me.WorldMatrix.Forward;
                 List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
@@ -84,27 +79,46 @@ namespace IngameScript
                 getController(ref blocks, out controller);
                 getWheels(ref blocks, out wheels);
                 getThrusters(ref blocks, out thrustersForward, out thrustersBackward);
-                name = antenna.HudText;
+				
+				if (debug) {
+					writeLog("done fetching", true);
+					writeLog("Antenna: " + antenna.CustomName, true);
+					writeLog("found " + screens.Count + " screens", true);
+					writeLog("Controller: " + controller.CustomName, true);
+					writeLog("found " + wheels.Count + " wheels", true);
+					writeLog("found " + thrustersForward.Count + " forward and " + thrustersBackward.Count + " backward thrusters", true);
+				}
 
                 Runtime.UpdateFrequency = freq;
+				if (debug) writeLog("UpdateFrequency: " + freq.ToString(), true);
 
                 //if there is the controller missing we cannot do anything
                 // PANIC I REPEAT PANIC
                 if (controller == null)
                 {
-                    Echo(" > PANIC <\n" +
-                        "There is no controller. Please add a Remote Control or Cockpit to this grid and recompile.");
-                    Me.Enabled = false;
-                    return;
+                    writeLog("There is no controller. Please add a Remote Control or Cockpit to this grid and recompile.", true);
+					canRun = false;
                 }
+				
+				if (antenna == null) {
+					writeLog("There is no antenna. Please add an antenna to this grid and recompile", true);
+					canRun = false;
+				} else {
+					name = antenna.HudText;
+				}
 
                 loadStorage();
+				writeLog("loaded Storage",true);
                 loadCustomData();
+				writeLog("loaded Custom Data", true);
+				
+				if (!canRun) Me.Enabled = false;
             } catch (Exception e)
             {
                 writeLog("woop woop\n" + e.Message + "\n" + e.StackTrace, true);
                 
             }
+			if (debug) writeLog("ending constructor", true);
         }
 
         public void writeLog(String toWrite, bool writeEcho = false)
@@ -153,7 +167,7 @@ namespace IngameScript
             }
         }
 
-        //returns a remote control (or cockpit, but there is none) if there are any
+        //returns a remote control (or cockpit, but there probably is none) if there are any
         //the user can specify which one to use by adding "elevator" to the custom name
         private void getController(ref List<IMyTerminalBlock> blocks, out IMyShipController controller)
         {
