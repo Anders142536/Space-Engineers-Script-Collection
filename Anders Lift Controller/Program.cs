@@ -47,6 +47,7 @@ namespace IngameScript
         Vector3 forward;     //normalized upward/forward vector
         IMyRadioAntenna antenna;
         List<IMyTerminalBlock> screens;
+        IMyTextPanel debugScreen;
         IMyShipController controller;
 
         Dictionary<string, Action> commands;
@@ -66,8 +67,15 @@ namespace IngameScript
          * * * * */
         public Program()
         {
-			if (debug) writeLog("starting constructor", true);
-			boolean canRun = true;
+            //we need to load storage first for the debug value
+            loadStorage();
+            writeLog("loaded Storage", true);
+            
+            if (debug) writeLog("starting constructor", true);
+            bool canRun = true;
+
+            loadCustomData();
+            writeLog("loaded Custom Data", true);
             try
             {
                 //fetching blocks
@@ -82,9 +90,10 @@ namespace IngameScript
 				
 				if (debug) {
 					writeLog("done fetching", true);
-					writeLog("Antenna: " + antenna.CustomName, true);
+					writeLog("Antenna: " + (antenna == null ? "none" : antenna.CustomName), true);
 					writeLog("found " + screens.Count + " screens", true);
-					writeLog("Controller: " + controller.CustomName, true);
+                    writeLog("debug screen: " + (debugScreen == null ? "none" : debugScreen.CustomName), true);
+					writeLog("Controller: " + (controller == null ? "none" : controller.CustomName), true);
 					writeLog("found " + wheels.Count + " wheels", true);
 					writeLog("found " + thrustersForward.Count + " forward and " + thrustersBackward.Count + " backward thrusters", true);
 				}
@@ -157,13 +166,18 @@ namespace IngameScript
         private void getTextPanels(ref List<IMyTerminalBlock> blocks, out List<IMyTerminalBlock> screens)
         {
             List<IMyTextPanel> panels = new List<IMyTextPanel>();
-            if (blocks.Exists(x => x is IMyTextPanel && x.CustomName.ToLower().Contains("elevator")))
+            if (blocks.Exists(x => x is IMyTextPanel && x.CustomData.ToLower().Contains("elevator")))
             {
-                screens = blocks.FindAll(x => x is IMyTextPanel && x.CustomName.ToLower().Contains("elevator"));
+                screens = blocks.FindAll(x => x is IMyTextPanel && x.CustomData.ToLower().Contains("elevator"));
             }
             else
             {
                 screens = blocks.FindAll(x => x is IMyTextPanel);
+            }
+
+            if (screens.Exists(x => x.CustomData.ToLower().Contains("debug")))
+            {
+                debugScreen = (IMyTextPanel)screens.Find(x => x.CustomData.ToLower().Contains("debug"));
             }
         }
 
@@ -242,7 +256,6 @@ namespace IngameScript
 			MyIniParseResult result;
             if (Storage != "" && ini.TryParse(Storage, out result))
             {
-				String freqString;
 				String IDs;
                 String sec = "Save";
 				ini.Get(sec, "lastID").TryGetInt32(out lastID);
@@ -646,13 +659,16 @@ namespace IngameScript
                     }
                 }
 
-                printScreens();
+                //why did i do that? what should be printed?
+                //printScreens();
+
+                if (debug) printDebugScreen();
 
                 //printing a little manual into the echo part
                 writeLog("    COMMANDS" +
                     "\nrequest STATIONNAME: tells the machine to go to this station" +
                     "\naddStation NAME X Y Z: adds the station with the given name and position to the elevator stations" +
-                    "\nremoveStation NAME: removes the station with the given name from the elevator stations", true);
+                    "\nremoveStation NAMEID: removes the station with the given name from the elevator stations", true);
             } catch (Exception e)
             {
                 writeLog(e.Message + "\n" + e.StackTrace, true);
@@ -749,6 +765,17 @@ namespace IngameScript
             foreach (IMyTextPanel screen in screens)
             {
                 screen.WriteText(toPrint);
+            }
+        }
+
+        private void printDebugScreen()
+        {
+            if (debugScreen != null)
+            {
+                String debugInformation = "Debug Information\n\n" +
+                    "goes here";
+
+                debugScreen.WriteText(debugInformation);
             }
         }
 
