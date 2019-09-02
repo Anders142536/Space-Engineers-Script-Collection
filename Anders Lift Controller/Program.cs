@@ -29,7 +29,7 @@ namespace IngameScript
 
         bool stopped;
         bool direction;
-        bool debug;
+        bool debug = true;
         Station next;
         Station marker;
         DateTime stopStamp = new DateTime();
@@ -115,11 +115,7 @@ namespace IngameScript
 				} else {
 					name = antenna.HudText;
 				}
-
-                loadStorage();
-				writeLog("loaded Storage",true);
-                loadCustomData();
-				writeLog("loaded Custom Data", true);
+                
 				
 				if (!canRun) Me.Enabled = false;
             } catch (Exception e)
@@ -665,10 +661,13 @@ namespace IngameScript
                 if (debug) printDebugScreen();
 
                 //printing a little manual into the echo part
-                writeLog("    COMMANDS" +
-                    "\nrequest STATIONNAME: tells the machine to go to this station" +
-                    "\naddStation NAME X Y Z: adds the station with the given name and position to the elevator stations" +
-                    "\nremoveStation NAMEID: removes the station with the given name from the elevator stations", true);
+                if (!debug)
+                {
+                    writeLog("    COMMANDS" +
+                        "\nrequest STATIONNAME: tells the machine to go to this station" +
+                        "\naddStation NAME X Y Z: adds the station with the given name and position to the elevator stations" +
+                        "\nremoveStation NAMEID: removes the station with the given name from the elevator stations", true);
+                }
             } catch (Exception e)
             {
                 writeLog(e.Message + "\n" + e.StackTrace, true);
