@@ -50,7 +50,6 @@ namespace IngameScript
         IMyTextPanel debugScreen;
         IMyShipController controller;
 
-        Dictionary<string, Action> commands;
         MyCommandLine cline = new MyCommandLine();
         MyIni ini = new MyIni();
         UpdateFrequency freq = UpdateFrequency.Update100;
@@ -69,13 +68,9 @@ namespace IngameScript
         {
             //we need to load storage first for the debug value
             loadStorage();
-            writeLog("loaded Storage", true);
-            
-            if (debug) writeLog("starting constructor", true);
             bool canRun = true;
-
             loadCustomData();
-            writeLog("loaded Custom Data", true);
+			
             try
             {
                 //fetching blocks
@@ -87,19 +82,8 @@ namespace IngameScript
                 getController(ref blocks, out controller);
                 getWheels(ref blocks, out wheels);
                 getThrusters(ref blocks, out thrustersForward, out thrustersBackward);
-				
-				if (debug) {
-					writeLog("done fetching", true);
-					writeLog("Antenna: " + (antenna == null ? "none" : antenna.CustomName), true);
-					writeLog("found " + screens.Count + " screens", true);
-                    writeLog("debug screen: " + (debugScreen == null ? "none" : debugScreen.CustomName), true);
-					writeLog("Controller: " + (controller == null ? "none" : controller.CustomName), true);
-					writeLog("found " + wheels.Count + " wheels", true);
-					writeLog("found " + thrustersForward.Count + " forward and " + thrustersBackward.Count + " backward thrusters", true);
-				}
 
                 Runtime.UpdateFrequency = freq;
-				if (debug) writeLog("UpdateFrequency: " + freq.ToString(), true);
 
                 //if there is the controller missing we cannot do anything
                 // PANIC I REPEAT PANIC
@@ -123,7 +107,6 @@ namespace IngameScript
                 writeLog("woop woop\n" + e.Message + "\n" + e.StackTrace, true);
                 
             }
-			if (debug) writeLog("ending constructor", true);
         }
 
         public void writeLog(String toWrite, bool writeEcho = false)
@@ -462,7 +445,8 @@ namespace IngameScript
 							switch (cline.Argument(0 + indexOffset).ToLower())
 							{
 								case "request":
-									request();
+									String requested = cline.Argument(1 + indexOffset).ToLower();
+									request(requested);
 									break;
 								case "addstation":
 									addStation();
@@ -655,8 +639,7 @@ namespace IngameScript
                     }
                 }
 
-                //why did i do that? what should be printed?
-                //printScreens();
+                printScreens();
 
                 if (debug) printDebugScreen();
 
@@ -675,10 +658,8 @@ namespace IngameScript
         }
 
         //sets the request state of the station that fits the given name or id to true
-        private void request()
+        private void request(String station)
         {
-            //name or id
-            String station = cline.Argument(1).ToLower();
 
             if (station == null)
             {
@@ -758,21 +739,35 @@ namespace IngameScript
             marker = new Station(new Vector3(x, y, z), -1);
         }
 
-        //prints a given string to all screens
-        private void printScreens(String toPrint)
+        //prints a list of all stations and their current state to all screens
+        private void printScreens()
         {
-            foreach (IMyTextPanel screen in screens)
-            {
-                screen.WriteText(toPrint);
-            }
+			if (screens.Any()) {
+				String toPrint = "   Stations:\n";
+				
+				foreach (Station station in stations) {
+					toPrint += "\n  " + station.name + (station.requested ? " requested" : "");
+				}
+				
+				foreach (IMyTextPanel screen in screens)
+				{
+					screen.WriteText(toPrint);
+				}
+			}
         }
 
         private void printDebugScreen()
         {
             if (debugScreen != null)
             {
-                String debugInformation = "Debug Information\n\n" +
-                    "goes here";
+                String debugInformation = "Debug Information\n" +
+                    "\n next: " + next.name +
+					"\n direction: " + direction +
+					"\n stopped: " + stopped +
+					"\n name: " + name +
+					"\n lastID: " + lastID +
+					"\n tickCounter: " + tickCounter +
+					"\n current Speed: " + getSpeed();
 
                 debugScreen.WriteText(debugInformation);
             }
@@ -790,9 +785,10 @@ namespace IngameScript
         }
 
         //returns a formatted string with all stations
+		//TODO use this in printScreens()
         private String listStations()
         {
-            if (stations.Count == 0) return "  There are no stations listed.";
+            if (!stations.Any()) return "  There are no stations listed.";
             StringBuilder result = new StringBuilder();
             
             foreach (Station station in stations)
