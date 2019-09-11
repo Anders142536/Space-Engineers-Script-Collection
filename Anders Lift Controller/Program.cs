@@ -445,11 +445,34 @@ namespace IngameScript
 							switch (cline.Argument(0 + indexOffset).ToLower())
 							{
 								case "request":
-									String requested = cline.Argument(1 + indexOffset).ToLower();
-									request(requested);
+                                    if (cline.Count >= 2 + indexOffset) {
+									    String requested = cline.Argument(1 + indexOffset);
+									    request(requested);
+                                    } else {
+                                        writeLog("There was no station name or ID given!");
+                                    }
 									break;
 								case "addstation":
-									addStation();
+                                    if (cline.Count >= 2 + indexOffset) {
+                                        Station toAdd;
+                                        //GPS:NAME:36384:226384:5796384:
+                                        //TODO write tryParseGps()
+                                        if (tryParseGps(cline.Argument(1 + indexOffset, out toAdd))) {
+                                            addStation(toAdd);
+                                        } else {
+                                            if (cline.Count >= 5 + indexOffset) {
+                                                Vector3 toAddPos = new Vector3(float.Parse(cline.Argument(2 + indexOffset)),
+                                                                                float.Parse(cline.Argument(3 + indexOffset)),
+                                                                                float.Parse(cline.Argument(4 + indexOffset)));
+                                                toAdd = new Station(toAddPos, ++lastID, cline.Argument(1 + indexOffset));
+                                                addStation(toAdd);
+                                            } else {
+                                                writeLog("Station data could not be read");
+                                            }
+                                        }
+                                    } else {
+                                        writeLog("There was no Station to add given");
+                                    }
 									break;
 								case "removestation":
 									removeStation();
@@ -663,9 +686,11 @@ namespace IngameScript
 
             if (station == null)
             {
-                Echo("No station name or ID was given!");
+                writeLog("No station name or ID was given!");
                 return;
             }
+
+            station = station.ToLower();
 
             List<Station> requested = stations.FindAll(x => x.ID.ToString() == station || x.name.ToLower() == station);
 
@@ -687,10 +712,7 @@ namespace IngameScript
 
         private void addStation()
         {
-            float x;
-            float y;
-            float z;
-            String stationName = cline.Argument(1);
+            foreach (Station station in stations)
 
             for (int i = 0; i < stations.Count; i++)
             {
